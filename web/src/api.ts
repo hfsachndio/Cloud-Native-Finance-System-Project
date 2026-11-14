@@ -1,3 +1,5 @@
+import { demoApi } from "./demo";
+
 export type Status = "Pending" | "Processing" | "Completed" | "NeedsReview";
 export interface Account { id: string; name: string; kind: string; mask: string; balance: number; currency: string; updatedAt: string }
 export interface Transaction {
@@ -16,7 +18,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 const json = (method: string, body: unknown): RequestInit => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
-export const api = {
+const httpApi = {
   accounts: () => request<Account[]>("/api/accounts"),
   netWorth: () => request<{ total: number; accounts: number }>("/api/accounts/net-worth"),
   transfer: (fromAccountId: string, toAccountId: string, amount: number) => request("/api/accounts/transfer", json("POST", { fromAccountId, toAccountId, amount })),
@@ -34,6 +36,10 @@ export const api = {
   cashFlow: (months = 6) => request<CashFlow[]>(`/api/reports/cash-flow?months=${months}`),
   categories: (year?: number) => request<CategoryShare[]>(`/api/reports/categories${year ? `?year=${year}` : ""}`),
 };
+
+// The Vercel demo build has no backend, so it uses the in-browser implementation in demo.ts.
+export const DEMO = import.meta.env.VITE_DEMO === "true";
+export const api: typeof httpApi = DEMO ? (demoApi as unknown as typeof httpApi) : httpApi;
 
 export const money = (n: number, sign = false) =>
   `${sign && n > 0 ? "+" : n < 0 ? "−" : ""}$${Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

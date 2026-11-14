@@ -2,6 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, NavLink, Route, Routes } from "react-router-dom";
 import "./styles.css";
+import { DEMO } from "./api";
+import { resetDemo } from "./demo";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Accounts from "./pages/Accounts";
@@ -20,6 +22,13 @@ function App() {
       <aside className="sidebar">
         <div className="brand"><span>✓</span>FinTrack</div>
         {nav.map(([to, label]) => <NavLink key={to} to={to} end className="nav">{label}</NavLink>)}
+        {DEMO && (
+          <div className="demo-note">
+            <b>Live demo</b>
+            <small>Runs in your browser with sample data. Changes are saved locally.</small>
+            <button onClick={() => { resetDemo(); location.reload(); }}>Reset data</button>
+          </div>
+        )}
         <div className="user"><span className="avatar">HZ</span><div><b>Hafsah Z.</b><small>Personal plan</small></div></div>
       </aside>
       <main>

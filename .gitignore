@@ -10,3 +10,4 @@ src/FinTrack.Gateway/wwwroot/
 local.settings.json
 *.trx
 .env
+*.tsbuildinfo

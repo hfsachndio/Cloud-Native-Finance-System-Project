@@ -7,18 +7,15 @@ targetScope = 'resourceGroup'
 @description('Short name used as a prefix for every resource.')
 param prefix string = 'fintrack'
 param location string = resourceGroup().location
-@description('F1 is the free App Service tier. Paid tiers are only for real production traffic.')
-@allowed(['F1', 'B1', 'S1'])
-param appServiceSku string = 'F1'
-@description('Use the Cosmos DB free tier (one account per subscription: 1000 RU/s and 25 GB free).')
-param cosmosFreeTier bool = true
+// Free tiers only. There are deliberately no parameters for paid SKUs.
+var appServiceSku = 'F1'
+var cosmosFreeTier = true
 @description('Optional: email for a monthly cost alert on this resource group. Leave empty to skip.')
 param budgetAlertEmail string = ''
 @description('Monthly budget (USD) that triggers the alert email.')
 param budgetAmount int = 1
 param budgetStart string = '${utcNow('yyyy-MM')}-01'
 
-var isFree = appServiceSku == 'F1'
 
 var unique = uniqueString(resourceGroup().id)
 var services = ['gateway', 'accounts', 'transactions', 'budgets']
@@ -50,9 +47,8 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
     databaseAccountOfferType: 'Standard'
     locations: [{ locationName: location, failoverPriority: 0 }]
     enableFreeTier: cosmosFreeTier
-    capabilities: cosmosFreeTier ? [] : [{ name: 'EnableServerless' }]
     // Hard cap so the account can never be scaled past the free allowance.
-    capacity: cosmosFreeTier ? { totalThroughputLimit: 1000 } : null
+    capacity: { totalThroughputLimit: 1000 }
     disableLocalAuth: true
   }
 }
@@ -63,7 +59,7 @@ resource db 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-05-15' = {
   properties: {
     resource: { id: 'fintrack' }
     // All containers share the database's 1000 RU/s (the free-tier amount).
-    options: cosmosFreeTier ? { throughput: 1000 } : {}
+    options: { throughput: 1000 }
   }
 }
 
@@ -118,7 +114,6 @@ resource apps 'Microsoft.Web/sites@2023-12-01' = [for s in services: {
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: false
-      healthCheckPath: isFree ? null : '/health'
       minTlsVersion: '1.2'
       appSettings: [
         { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: insights.properties.ConnectionString }

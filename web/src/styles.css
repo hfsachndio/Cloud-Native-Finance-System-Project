@@ -39,3 +39,8 @@ button { height: 40px; border: 0; border-radius: 11px; background: var(--blue); 
 .thumb { height: 90px; border-radius: 12px; background: linear-gradient(135deg, #EFF6FF, #E0E7FF); display: grid; place-items: center; font-size: 32px; }
 .donut { width: 180px; height: 180px; border-radius: 50%; display: grid; place-items: center; } .donut div { width: 104px; height: 104px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-weight: 800; }
 .legend { display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; } .legend div { display: flex; gap: 8px; align-items: center; } .legend i { width: 10px; height: 10px; border-radius: 3px; } .legend b { margin-left: auto; padding-left: 16px; }
+.demo-note { margin-top: auto; padding: 10px 12px; border-radius: 12px; border: 1px dashed rgba(255,255,255,.25); color: rgba(255,255,255,.85); font-size: 12px; }
+.demo-note b { display: block; color: #fff; font-size: 13px; }
+.demo-note small { display: block; opacity: .75; margin: 2px 0 8px; line-height: 1.35; }
+.demo-note button { background: rgba(255,255,255,.12); color: #fff; border: 0; border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+.demo-note + .user { margin-top: 10px; }

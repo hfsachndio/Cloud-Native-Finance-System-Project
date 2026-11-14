@@ -101,12 +101,11 @@ az group create -n fintrack-rg -l eastus
 az deployment group create -g fintrack-rg -f infra/main.bicep -p prefix=fintrack
 ```
 
-Or run the **Deploy to Azure** workflow from the Actions tab. It is manual only (pushes run CI, never a deploy) and needs the
-repository secrets `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` (OIDC federated credential) and the variable `AZURE_RESOURCE_GROUP`.
+Nothing deploys automatically: this repository has no deployment pipeline, only CI (build and tests).
 
 ### Cost
 
-The Bicep template defaults to Azure's free allowances, so a demo deployment costs nothing or close to it:
+The Bicep template is locked to Azure's free tiers (no paid SKU can be selected), so a manual demo deployment costs nothing or close to it:
 
 | Resource | Tier | Free allowance |
 |---|---|---|
@@ -116,7 +115,7 @@ The Bicep template defaults to Azure's free allowances, so a demo deployment cos
 | Log Analytics / App Insights | Daily cap 0.1 GB | 5 GB/month ingestion |
 | Blob Storage | Standard LRS | a few cents at demo volume (free for 12 months on a new account) |
 
-Set the repository variable `BUDGET_ALERT_EMAIL` (or pass `-p budgetAlertEmail=you@example.com`) to get an email
+Pass `-p budgetAlertEmail=you@example.com` to get an email
 as soon as the resource group spends anything. Delete the resource group when you are done: `az group delete -n fintrack-rg`.
 
 Services switch to Cosmos DB and Blob Storage when `Storage__Provider=Azure` (set by the Bicep template).
