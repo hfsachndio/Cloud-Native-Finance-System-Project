@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "FinTrack.Budgets": {
+      "commandName": "Project",
+      "applicationUrl": "http://localhost:5103",
+      "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    }
+  }
+}

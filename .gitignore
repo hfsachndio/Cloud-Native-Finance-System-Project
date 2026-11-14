@@ -1,0 +1,12 @@
+bin/
+obj/
+out/
+*.user
+.vs/
+.vscode/
+node_modules/
+web/dist/
+src/FinTrack.Gateway/wwwroot/
+local.settings.json
+*.trx
+.env

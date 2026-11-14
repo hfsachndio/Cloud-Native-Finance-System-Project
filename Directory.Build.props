@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- UseAzure=true (default) wires Cosmos DB + Blob Storage.
+         Build with -p:UseAzure=false for a dependency-free, in-memory local build. -->
+    <UseAzure Condition="'$(UseAzure)' == ''">true</UseAzure>
+    <DefineConstants Condition="'$(UseAzure)' == 'true'">$(DefineConstants);AZURE</DefineConstants>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\FinTrack.Shared\FinTrack.Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseAzure)' == 'true'">
+    <ProjectReference Include="..\FinTrack.Infrastructure\FinTrack.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

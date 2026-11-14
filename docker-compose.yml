@@ -1,0 +1,23 @@
+# Local run with in-memory storage (no Azure account needed):
+#   docker compose up --build    ->  http://localhost:5100
+# Set STORAGE_PROVIDER=Azure plus the Cosmos/Storage connection strings to use real Azure resources.
+services:
+  gateway:
+    build: { context: ., args: { PROJECT: FinTrack.Gateway } }
+    ports: ["5100:8080"]
+    environment:
+      Services__Accounts: http://accounts:8080
+      Services__Transactions: http://transactions:8080
+      Services__Budgets: http://budgets:8080
+    depends_on: [accounts, transactions, budgets]
+  accounts:
+    build: { context: ., args: { PROJECT: FinTrack.Accounts } }
+    environment: { Storage__Provider: "${STORAGE_PROVIDER:-InMemory}" }
+  transactions:
+    build: { context: ., args: { PROJECT: FinTrack.Transactions } }
+    environment: { Storage__Provider: "${STORAGE_PROVIDER:-InMemory}" }
+  budgets:
+    build: { context: ., args: { PROJECT: FinTrack.Budgets } }
+    environment:
+      Storage__Provider: "${STORAGE_PROVIDER:-InMemory}"
+      Services__Transactions: http://transactions:8080

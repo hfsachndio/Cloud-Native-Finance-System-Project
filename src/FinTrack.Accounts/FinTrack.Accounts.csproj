@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\FinTrack.ServiceDefaults\FinTrack.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

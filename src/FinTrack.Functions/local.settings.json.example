@@ -1,0 +1,12 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "Storage": "UseDevelopmentStorage=true",
+    "Storage:ConnectionString": "UseDevelopmentStorage=true",
+    "Cosmos": "AccountEndpoint=https://localhost:8081/;AccountKey=<emulator-key>",
+    "Cosmos:ConnectionString": "AccountEndpoint=https://localhost:8081/;AccountKey=<emulator-key>",
+    "Cosmos:Database": "fintrack"
+  }
+}
