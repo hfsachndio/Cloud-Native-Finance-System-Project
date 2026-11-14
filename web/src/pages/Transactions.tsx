@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { api, money } from "../api";
 import { useApi } from "../useApi";
 import { Card, Loading, Page, StatusPill } from "../components/ui";
@@ -38,7 +39,7 @@ export default function Transactions() {
           <table>
             <thead><tr><th>Description</th><th>Category</th><th>Date</th><th>Receipt</th><th>Status</th><th className="right">Amount</th></tr></thead>
             <tbody>{rows.map((t) => (
-              <tr key={t.id}><td><b>{t.description}</b></td><td>{t.category}</td><td className="muted">{t.date}</td><td className="link">{t.receiptBlob ? t.receiptBlob.split("/").pop() : "—"}</td><td><StatusPill status={t.status} /></td><td className={`right ${t.amount > 0 ? "good" : ""}`}><b>{money(t.amount, true)}</b></td></tr>
+              <tr key={t.id}><td><b>{t.description}</b></td><td>{t.category}</td><td className="muted">{t.date}</td><td>{t.receiptBlob ? <Link className="link" to="/receipts">{t.receiptBlob.split("/").pop()}</Link> : <span className="muted">—</span>}</td><td><StatusPill status={t.status} /></td><td className={`right ${t.amount > 0 ? "good" : ""}`}><b>{money(t.amount, true)}</b></td></tr>
             ))}</tbody>
           </table>
         </Card>

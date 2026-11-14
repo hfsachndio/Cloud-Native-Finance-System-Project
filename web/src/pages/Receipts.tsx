@@ -23,6 +23,7 @@ export default function Receipts() {
     const t = await api.uploadReceipt(target, file);
     setMsg(`Uploaded ${file.name}. Status: ${t.status}.`);
     reload();
+    setTimeout(() => { reload(); setMsg(`${file.name} processed.`); }, 3000);
   };
 
   return (
