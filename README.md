@@ -101,6 +101,9 @@ az group create -n fintrack-rg -l eastus
 az deployment group create -g fintrack-rg -f infra/main.bicep -p prefix=fintrack
 ```
 
+Or run the **Deploy to Azure** workflow from the Actions tab. It is manual only (pushes run CI, never a deploy) and needs the
+repository secrets `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` (OIDC federated credential) and the variable `AZURE_RESOURCE_GROUP`.
+
 Services switch to Cosmos DB and Blob Storage when `Storage__Provider=Azure` (set by the Bicep template).
 For a dependency-free local build, use `dotnet build -p:UseAzure=false`.
 
