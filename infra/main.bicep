@@ -1,13 +1,24 @@
 // FinTrack infrastructure: App Service (gateway + 3 microservices), Azure Functions,
-// Cosmos DB (serverless), Blob Storage and Application Insights.
+// Cosmos DB, Blob Storage and Application Insights.
+// Sized to stay inside Azure's free allowances by default (see README "Cost").
 // Deploy:  az deployment group create -g <rg> -f infra/main.bicep -p prefix=fintrack
 targetScope = 'resourceGroup'
 
 @description('Short name used as a prefix for every resource.')
 param prefix string = 'fintrack'
 param location string = resourceGroup().location
-@allowed(['B1', 'S1', 'P0v3'])
-param appServiceSku string = 'B1'
+@description('F1 is the free App Service tier. Paid tiers are only for real production traffic.')
+@allowed(['F1', 'B1', 'S1'])
+param appServiceSku string = 'F1'
+@description('Use the Cosmos DB free tier (one account per subscription: 1000 RU/s and 25 GB free).')
+param cosmosFreeTier bool = true
+@description('Optional: email for a monthly cost alert on this resource group. Leave empty to skip.')
+param budgetAlertEmail string = ''
+@description('Monthly budget (USD) that triggers the alert email.')
+param budgetAmount int = 1
+param budgetStart string = '${utcNow('yyyy-MM')}-01'
+
+var isFree = appServiceSku == 'F1'
 
 var unique = uniqueString(resourceGroup().id)
 var services = ['gateway', 'accounts', 'transactions', 'budgets']
@@ -15,7 +26,12 @@ var services = ['gateway', 'accounts', 'transactions', 'budgets']
 resource logs 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: '${prefix}-logs-${unique}'
   location: location
-  properties: { sku: { name: 'PerGB2018' }, retentionInDays: 30 }
+  properties: {
+    sku: { name: 'PerGB2018' }
+    retentionInDays: 30
+    // 5 GB/month ingestion is free; cap daily ingestion well below that.
+    workspaceCapping: { dailyQuotaGb: json('0.1') }
+  }
 }
 
 resource insights 'Microsoft.Insights/components@2020-02-02' = {
@@ -25,7 +41,7 @@ resource insights 'Microsoft.Insights/components@2020-02-02' = {
   properties: { Application_Type: 'web', WorkspaceResourceId: logs.id }
 }
 
-// ---------- Cosmos DB (serverless, partitioned by /userId) ----------
+// ---------- Cosmos DB (free tier: shared 1000 RU/s, partitioned by /userId) ----------
 resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
   name: '${prefix}-cosmos-${unique}'
   location: location
@@ -33,7 +49,10 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
   properties: {
     databaseAccountOfferType: 'Standard'
     locations: [{ locationName: location, failoverPriority: 0 }]
-    capabilities: [{ name: 'EnableServerless' }]
+    enableFreeTier: cosmosFreeTier
+    capabilities: cosmosFreeTier ? [] : [{ name: 'EnableServerless' }]
+    // Hard cap so the account can never be scaled past the free allowance.
+    capacity: cosmosFreeTier ? { totalThroughputLimit: 1000 } : null
     disableLocalAuth: true
   }
 }
@@ -41,7 +60,11 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
 resource db 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-05-15' = {
   parent: cosmos
   name: 'fintrack'
-  properties: { resource: { id: 'fintrack' } }
+  properties: {
+    resource: { id: 'fintrack' }
+    // All containers share the database's 1000 RU/s (the free-tier amount).
+    options: cosmosFreeTier ? { throughput: 1000 } : {}
+  }
 }
 
 resource containers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = [for c in ['accounts', 'transactions', 'budgets', 'alerts']: {
@@ -94,7 +117,8 @@ resource apps 'Microsoft.Web/sites@2023-12-01' = [for s in services: {
     httpsOnly: true
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
-      healthCheckPath: '/health'
+      alwaysOn: false
+      healthCheckPath: isFree ? null : '/health'
       minTlsVersion: '1.2'
       appSettings: [
         { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: insights.properties.ConnectionString }
@@ -171,6 +195,26 @@ resource funcCosmosAccess 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignme
   parent: cosmos
   name: guid(cosmos.id, functions.id, cosmosDataContributor)
   properties: { principalId: functions.identity.principalId, roleDefinitionId: '${cosmos.id}/sqlRoleDefinitions/${cosmosDataContributor}', scope: cosmos.id }
+}
+
+// ---------- Optional cost alert ----------
+resource budget 'Microsoft.Consumption/budgets@2023-11-01' = if (!empty(budgetAlertEmail)) {
+  name: '${prefix}-monthly-budget'
+  properties: {
+    category: 'Cost'
+    amount: budgetAmount
+    timeGrain: 'Monthly'
+    timePeriod: { startDate: budgetStart }
+    notifications: {
+      anySpend: {
+        enabled: true
+        operator: 'GreaterThan'
+        threshold: 1
+        thresholdType: 'Actual'
+        contactEmails: [budgetAlertEmail]
+      }
+    }
+  }
 }
 
 output gatewayUrl string = 'https://${apps[0].properties.defaultHostName}'

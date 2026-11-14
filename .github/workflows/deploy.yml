@@ -37,7 +37,7 @@ jobs:
       - name: Provision infrastructure (Bicep)
         id: infra
         run: |
-          out=$(az deployment group create -g "${{ vars.AZURE_RESOURCE_GROUP }}" -f infra/main.bicep --query properties.outputs -o json)
+          out=$(az deployment group create -g "${{ vars.AZURE_RESOURCE_GROUP }}" -f infra/main.bicep -p budgetAlertEmail="${{ vars.BUDGET_ALERT_EMAIL }}" --query properties.outputs -o json)
           echo "apps=$(echo $out | jq -c '.appNames.value')" >> $GITHUB_OUTPUT
           echo "func=$(echo $out | jq -r '.functionApp.value')" >> $GITHUB_OUTPUT
       - name: Deploy web apps
