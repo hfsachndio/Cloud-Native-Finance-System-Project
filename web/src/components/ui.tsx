@@ -33,4 +33,4 @@ export const Bar = ({ value, color = "var(--blue)" }: { value: number; color?: s
 );
 
 export const Loading = ({ error }: { error?: string | null }) =>
-  <div className="card muted">{error ? `Could not load data: ${error}. Is the gateway running on :5100?` : "Loading…"}</div>;
+  <div className="card muted">{error ? `Could not load data: ${error}` : "Loading…"}</div>;

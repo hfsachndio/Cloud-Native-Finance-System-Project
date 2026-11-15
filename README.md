@@ -5,6 +5,12 @@
 
 ![FinTrack](docs/preview.png)
 
+**Live demo:** https://fintrack-two-rosy.vercel.app (click **Try a demo workspace**, or create an account)
+
+The live demo runs a **Node.js serverless API on Vercel backed by Turso (libSQL)** that exposes the same routes as the .NET gateway (`web/api/`):
+JWT sign-in and sign-up (bcrypt), a private seeded workspace per user, auto-categorisation, budget alerts, transfers with balance checks, receipt upload and processing, and reports.
+The Azure/.NET build below is the main architecture; the Vercel API keeps the demo free to host.
+
 ## Features
 
 - **Dashboard** — total balance, monthly income and spending, 6-month cash flow, budgets and recent transactions

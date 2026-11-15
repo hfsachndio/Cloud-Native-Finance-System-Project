@@ -27,7 +27,7 @@ export default function Receipts() {
   };
 
   return (
-    <Page title="Receipts" subtitle="Stored securely in Azure Blob Storage">
+    <Page title="Receipts" subtitle="Stored privately per account (Azure Blob Storage in the .NET build, Turso on Vercel)">
       <Card title="How a receipt is processed" hint="Serverless pipeline">
         <div className="steps">{steps.map(([t, d], i) => <div key={t} className="step"><span>{i + 1}</span><b>{t}</b><small className="muted">{d}</small></div>)}</div>
       </Card>
@@ -37,14 +37,14 @@ export default function Receipts() {
             <option value="">Choose a transaction…</option>
             {spending.map((t) => <option key={t.id} value={t.id}>{t.description} · {money(t.amount)}</option>)}
           </select>
-          <input type="file" accept="image/*,.pdf,.txt" onChange={(e) => upload(e.target.files?.[0])} />
+          <input type="file" accept="image/*,.pdf,.txt" onChange={(e) => upload(e.target.files?.[0]).catch((err: Error) => setMsg(err.message))} />
           <span className="muted">{msg}</span>
         </div>
       </Card>
       <div className="grid3">
         {withReceipts.map((t) => (
           <Card key={t.id}>
-            <div className="thumb">🧾</div>
+            <button className="thumb" title={t.hasFile ? "Open receipt" : "Sample receipt (no file stored)"} disabled={!t.hasFile} onClick={() => api.openReceipt(t.id).catch((e: Error) => setMsg(e.message))}>🧾</button>
             <div className="row between"><b>{t.description}</b><StatusPill status={t.status} /></div>
             <small className="muted">{t.receiptBlob?.split("/").pop()} · {t.date}</small>
             <div className="big">{money(Math.abs(t.amount))}</div>
