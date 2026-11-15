@@ -1,4 +1,4 @@
-import { api, money, monthLabel } from "../api";
+import { api, money, monthLabel, session } from "../api";
 import { useApi } from "../useApi";
 import { Bar, Card, Kpi, Loading, Page, StatusPill } from "../components/ui";
 
@@ -8,8 +8,11 @@ export default function Dashboard() {
   const [worth, flow, budgets, txs] = data;
   const month = flow[flow.length - 1];
   const max = Math.max(...flow.flatMap((f) => [f.income, f.spending]), 1);
+  const h = new Date().getHours();
+  const greeting = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+  const first = session.user()?.guest ? "" : session.user()?.name.split(" ")[0];
   return (
-    <Page title="Good evening, Hafsah" subtitle="Your money at a glance" actions={<span className="sync">● Real-time sync</span>}>
+    <Page title={first ? `${greeting}, ${first}` : greeting} subtitle="Your money at a glance" actions={<span className="sync">● Real-time sync</span>}>
       <div className="grid4">
         <Kpi label="Total balance" value={money(worth.total)} hint={`${worth.accounts} accounts`} />
         <Kpi label="Income this month" value={money(month.income)} good hint="Deposits" />
