@@ -32,6 +32,7 @@ export default async function handler(req, res) {
     else if (method === "GET" && path === "auth/me") out = await s.me(auth());
     else if (method === "POST" && path === "workspace/reset") out = await s.resetWorkspace(auth());
     else if (method === "GET" && path === "accounts") out = await s.accounts(auth());
+    else if (method === "POST" && path === "accounts") out = await s.addAccount(auth(), body);
     else if (method === "GET" && path === "accounts/net-worth") out = await s.netWorth(auth());
     else if (method === "POST" && path === "accounts/transfer") out = await s.transfer(auth(), body);
     else if (method === "GET" && path === "transactions") out = await s.transactions(auth(), qp);

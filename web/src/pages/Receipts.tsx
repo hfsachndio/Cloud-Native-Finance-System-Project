@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, money } from "../api";
 import { useApi } from "../useApi";
-import { Card, Loading, Page, StatusPill } from "../components/ui";
+import { Card, Empty, Loading, Page, StatusPill } from "../components/ui";
 
 const steps = [
   ["Uploaded", "Blob Storage · private container"],
@@ -41,6 +41,7 @@ export default function Receipts() {
           <span className="muted">{msg}</span>
         </div>
       </Card>
+      {spending.length === 0 && <Empty title="No spending to attach receipts to">Add a spending transaction first, then upload its receipt here.</Empty>}
       <div className="grid3">
         {withReceipts.map((t) => (
           <Card key={t.id}>

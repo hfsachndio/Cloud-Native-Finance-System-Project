@@ -34,7 +34,7 @@ export function verify(token) {
   try { return jwt.verify(token, SECRET()).sub; } catch { return null; }
 }
 
-async function createUser(c, { email, name, password, guest = false }) {
+async function createUser(c, { email, name, password, guest = false, seed = guest }) {
   const u = { id: newId(), email, name, password_hash: await bcrypt.hash(password, 10), is_guest: guest ? 1 : 0, created_at: new Date().toISOString() };
   try {
     await c.execute({ sql: "insert into users (id, email, name, password_hash, is_guest, created_at) values (?,?,?,?,?,?)", args: [u.id, u.email, u.name, u.password_hash, u.is_guest, u.created_at] });
@@ -42,7 +42,8 @@ async function createUser(c, { email, name, password, guest = false }) {
     if (/UNIQUE/i.test(String(e.message))) throw new HttpError(409, "An account with this email already exists.");
     throw e;
   }
-  await seedWorkspace(c, u.id);
+  // Demo workspaces come with sample data; real accounts start empty.
+  if (seed) await seedWorkspace(c, u.id);
   return u;
 }
 
@@ -91,11 +92,26 @@ async function seedWorkspace(c, uid) {
   for (const b of s.budgets) await checkBudget(c, uid, b.category, b.month);
 }
 
+/** Clears the workspace; demo (guest) workspaces get the sample data back, real accounts start empty again. */
 export async function resetWorkspace(uid) {
   const c = await db();
+  const u = (await c.execute({ sql: "select is_guest from users where id = ?", args: [uid] })).rows[0];
   await c.batch(["accounts", "transactions", "receipts", "budgets", "alerts"].map((t) => ({ sql: `delete from ${t} where user_id = ?`, args: [uid] })), "write");
-  await seedWorkspace(c, uid);
+  if (u?.is_guest) await seedWorkspace(c, uid);
   return { ok: true };
+}
+
+const KINDS = ["Checking", "Savings", "CreditCard", "Cash"];
+export async function addAccount(uid, body) {
+  const name = String(body.name || "").trim().slice(0, 40);
+  const kind = KINDS.includes(body.kind) ? body.kind : "Checking";
+  const balance = round2(Number(body.balance) || 0);
+  const mask = String(body.mask || "").replace(/\D/g, "").slice(-4);
+  if (!name) throw new HttpError(400, "Give the account a name");
+  const c = await db();
+  const a = { id: newId(), name, kind, mask, balance, currency: "USD", updated_at: new Date().toISOString() };
+  await c.execute({ sql: "insert into accounts (id, user_id, name, kind, mask, balance, currency, updated_at) values (?,?,?,?,?,?,?,?)", args: [a.id, uid, a.name, a.kind, a.mask, a.balance, a.currency, a.updated_at] });
+  return toAccount(a);
 }
 
 const toAccount = (r) => ({ id: r.id, name: r.name, kind: r.kind, mask: r.mask, balance: Number(r.balance), currency: r.currency, updatedAt: r.updated_at });

@@ -21,12 +21,16 @@ export const session = {
   user: (): User | null => { const u = read(USER_KEY); return u ? (JSON.parse(u) as User) : null; },
   set(token: string, user: User) { try { localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(USER_KEY, JSON.stringify(user)); } catch { /* ignore */ } },
   clear() { try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); } catch { /* ignore */ } },
+  /** Remembers where this user was, so signing in again continues from there. */
+  rememberPage(path: string) { const u = session.user(); if (u && path !== "/login") { try { localStorage.setItem(`fintrack-last:${u.id}`, path); } catch { /* ignore */ } } },
+  lastPage(userId: string) { try { return localStorage.getItem(`fintrack-last:${userId}`) || "/"; } catch { return "/"; } },
+  expire() { session.rememberPage(location.pathname + location.search); session.clear(); location.assign("/login?expired=1"); },
 };
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = session.token();
   const res = await fetch(path, { ...init, headers: { ...(init.headers ?? {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
-  if (res.status === 401 && !path.startsWith("/api/auth/")) { session.clear(); location.assign("/login"); }
+  if (res.status === 401 && !path.startsWith("/api/auth/")) { session.expire(); }
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { error?: string } | null;
     throw new Error(body?.error ?? `${init.method ?? "GET"} ${path} failed with ${res.status}`);
@@ -43,6 +47,7 @@ const json = (method: string, body: unknown): RequestInit => ({ method, headers:
 
 const httpApi = {
   accounts: () => request<Account[]>("/api/accounts"),
+  addAccount: (a: { name: string; kind: string; balance: number; mask?: string }) => request<Account>("/api/accounts", json("POST", a)),
   netWorth: () => request<{ total: number; accounts: number }>("/api/accounts/net-worth"),
   transfer: (fromAccountId: string, toAccountId: string, amount: number) => request("/api/accounts/transfer", json("POST", { fromAccountId, toAccountId, amount })),
   transactions: (q: { month?: string; category?: string; status?: string } = {}) =>
@@ -66,11 +71,13 @@ const httpApi = {
 
 type AuthResult = { token: string; user: User };
 const remember = (r: AuthResult) => { session.set(r.token, r.user); return r.user; };
+/** Where to go after signing in: the page this user was on when they last left. */
+export const afterLogin = (u: User) => session.lastPage(u.id);
 export const auth = {
   login: (email: string, password: string) => request<AuthResult>("/api/auth/login", json("POST", { email, password })).then(remember),
   register: (name: string, email: string, password: string) => request<AuthResult>("/api/auth/register", json("POST", { name, email, password })).then(remember),
   demo: () => request<AuthResult>("/api/auth/demo", json("POST", {})).then(remember),
-  logout: () => { session.clear(); location.assign("/login"); },
+  logout: () => { session.rememberPage(location.pathname + location.search); session.clear(); location.assign("/login"); },
 };
 
 // `--mode demo` builds a backend-free version that uses the in-browser implementation in demo.ts.

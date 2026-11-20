@@ -34,3 +34,8 @@ export const Bar = ({ value, color = "var(--blue)" }: { value: number; color?: s
 
 export const Loading = ({ error }: { error?: string | null }) =>
   <div className="card muted">{error ? `Could not load data: ${error}` : "Loading…"}</div>;
+
+/** Shown when a new account has nothing yet: says what to do next. */
+export const Empty = ({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) => (
+  <div className="card empty"><b>{title}</b>{children && <p className="muted">{children}</p>}{action}</div>
+);

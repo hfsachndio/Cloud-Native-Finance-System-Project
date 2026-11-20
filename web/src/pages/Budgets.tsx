@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, money } from "../api";
 import { useApi } from "../useApi";
-import { Bar, Card, Loading, Page } from "../components/ui";
+import { Bar, Card, Empty, Loading, Page } from "../components/ui";
 
 export default function Budgets() {
   const { data, error, reload } = useApi(() => Promise.all([api.budgets(), api.alerts()]));
@@ -18,7 +18,8 @@ export default function Budgets() {
 
   return (
     <Page title="Budgets" subtitle="Live progress · alerts at 90% of a budget">
-      {alerts.map((a) => <div key={a.id} className="alert">🔔 <b>{a.message}</b> <span className="muted">Raised by Azure Functions</span></div>)}
+      {alerts.map((a) => <div key={a.id} className="alert">🔔 <b>{a.message}</b> <span className="muted">Budget alert</span></div>)}
+      {budgets.length === 0 && <Empty title="No budgets this month">Create a monthly limit for a category below. You get an alert when spending reaches 90%.</Empty>}
       <div className="grid3">
         {budgets.map((b) => (
           <Card key={b.category}>

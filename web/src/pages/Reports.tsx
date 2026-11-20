@@ -1,6 +1,6 @@
 import { api, money, monthLabel } from "../api";
 import { useApi } from "../useApi";
-import { Card, Kpi, Loading, Page } from "../components/ui";
+import { Card, Empty, Kpi, Loading, Page } from "../components/ui";
 
 const colors = ["#F59E0B", "#2563EB", "#4F46E5", "#DB2777", "#0D9488", "#7C3AED", "#94A3B8"];
 
@@ -15,6 +15,7 @@ export default function Reports() {
   const maxSaved = Math.max(...flow.map((f) => f.income - f.spending), 1);
   return (
     <Page title="Reports" subtitle="Insights from your spending">
+      {income === 0 && spending === 0 && <Empty title="Nothing to report yet">Reports fill in as you add transactions.</Empty>}
       <div className="grid4">
         <Kpi label="Income (12 months)" value={money(income)} />
         <Kpi label="Spending (12 months)" value={money(spending)} />
@@ -24,7 +25,7 @@ export default function Reports() {
       <div className="grid2">
         <Card title="Spending by category">
           <div className="row">
-            <div className="donut" style={{ background: `conic-gradient(${gradient})` }}><div>{money(cats.reduce((s, c) => s + c.spent, 0))}</div></div>
+            <div className="donut" style={{ background: cats.length ? `conic-gradient(${gradient})` : "#E5E7EB" }}><div>{money(cats.reduce((s, c) => s + c.spent, 0))}</div></div>
             <div className="legend">{cats.map((c, i) => <div key={c.category}><i style={{ background: colors[i % colors.length] }} />{c.category}<b>{c.share}%</b></div>)}</div>
           </div>
         </Card>

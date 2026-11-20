@@ -1,6 +1,7 @@
 import { api, money, monthLabel, session } from "../api";
 import { useApi } from "../useApi";
-import { Bar, Card, Kpi, Loading, Page, StatusPill } from "../components/ui";
+import { Link } from "react-router-dom";
+import { Bar, Card, Empty, Kpi, Loading, Page, StatusPill } from "../components/ui";
 
 export default function Dashboard() {
   const { data, error } = useApi(() => Promise.all([api.netWorth(), api.cashFlow(6), api.budgets(), api.transactions()]));
@@ -13,6 +14,11 @@ export default function Dashboard() {
   const first = session.user()?.guest ? "" : session.user()?.name.split(" ")[0];
   return (
     <Page title={first ? `${greeting}, ${first}` : greeting} subtitle="Your money at a glance" actions={<span className="sync">● Real-time sync</span>}>
+      {worth.accounts === 0 && (
+        <Empty title="Welcome to FinTrack" action={<Link className="btn" to="/accounts">Add your first account</Link>}>
+          Your workspace is empty. Add an account with its balance, then record transactions and set budgets. Everything you add is saved to your account.
+        </Empty>
+      )}
       <div className="grid4">
         <Kpi label="Total balance" value={money(worth.total)} hint={`${worth.accounts} accounts`} />
         <Kpi label="Income this month" value={money(month.income)} good hint="Deposits" />
@@ -31,6 +37,7 @@ export default function Dashboard() {
           </div>
         </Card>
         <Card title="Budgets" hint="This month">
+          {budgets.length === 0 && <p className="muted">No budgets yet. <Link className="link" to="/budgets">Create one</Link>.</p>}
           {budgets.slice(0, 5).map((b) => (
             <div key={b.category} className="budget-row">
               <div className="row between"><b>{b.category}</b><span>{money(b.spent)} <span className="muted">/ {money(b.limit)}</span></span></div>
@@ -39,7 +46,8 @@ export default function Dashboard() {
           ))}
         </Card>
       </div>
-      <Card title="Recent transactions" hint="Processed by Azure Functions">
+      <Card title="Recent transactions" hint={txs.length ? "Auto-categorised by the API" : ""}>
+        {txs.length === 0 && <p className="muted">No transactions yet. <Link className="link" to="/transactions">Add one</Link>.</p>}
         <table>
           <thead><tr><th>Description</th><th>Category</th><th>Date</th><th>Status</th><th className="right">Amount</th></tr></thead>
           <tbody>{txs.slice(0, 5).map((t) => (
