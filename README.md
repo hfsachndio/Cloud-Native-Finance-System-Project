@@ -8,7 +8,7 @@
 **Live demo:** https://fintrack-two-rosy.vercel.app (click **Try a demo workspace**, or create an account)
 
 The live demo runs a **Node.js serverless API on Vercel backed by Turso (libSQL)** that exposes the same routes as the .NET gateway (`web/api/`):
-JWT sign-in and sign-up (bcrypt), a private seeded workspace per user, auto-categorisation, budget alerts, transfers with balance checks, receipt upload and processing, and reports.
+JWT sign-in and sign-up (bcrypt); new accounts start with an empty workspace (the demo workspace comes with sample data), and signing in returns you to the page you last had open; auto-categorisation, budget alerts, transfers with balance checks, receipt upload and processing, and reports.
 The Azure/.NET build below is the main architecture; the Vercel API keeps the demo free to host.
 
 ## Features
@@ -19,6 +19,7 @@ The Azure/.NET build below is the main architecture; the Vercel API keeps the de
 - **Budgets** — live progress per category; a **Cosmos DB change-feed function** raises an alert at 90% of a budget
 - **Accounts** — linked accounts, net worth and transfers between accounts
 - **Reports** — spending by category and monthly savings
+- **Your own workspace** — a new account starts empty (add accounts, transactions and budgets yourself); "Clear my data" resets it, and signing in takes you back to the page you left
 - **Secure by default** — managed identities for Cosmos DB and Storage (no keys in config), HTTPS only, private blobs, per-user partitioning
 
 ## Architecture
