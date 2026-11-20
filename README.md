@@ -65,6 +65,8 @@ flowchart TB
 | ![](docs/screenshots/budgets.png) | ![](docs/screenshots/receipts.png) |
 | **Accounts** | **Reports** |
 | ![](docs/screenshots/accounts.png) | ![](docs/screenshots/reports.png) |
+| **AI insights** | |
+| ![](docs/screenshots/insights.png) | |
 
 ## Run locally
 

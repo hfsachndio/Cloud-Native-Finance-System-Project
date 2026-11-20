@@ -49,9 +49,10 @@ export function categorise(description, amount, learned) {
   let category = top.p >= MIN_CONFIDENCE ? top.label : "Uncategorised";
   // money in can only be income or a transfer; money out is never income
   // money in is income unless the model is fairly sure it is a transfer between accounts
-  if (amount > 0) { const tr = predict(description).find((x) => x.label === "Transfers").p; category = tr >= 0.6 ? "Transfers" : "Income"; }
+  let confidence = top.p;
+  if (amount > 0) { const tr = predict(description).find((x) => x.label === "Transfers").p; category = tr >= 0.6 ? "Transfers" : "Income"; confidence = category === "Transfers" ? tr : 1 - tr; }
   if (amount < 0 && category === "Income") category = second && second.p >= 0.2 ? second.label : "Uncategorised";
-  return { category, confidence: Math.round(top.p * 1000) / 1000, source: "model", alternatives: [top, second].filter(Boolean).map((a) => ({ label: a.label, p: Math.round(a.p * 1000) / 1000 })) };
+  return { category, confidence: Math.round(confidence * 1000) / 1000, source: "model", alternatives: [top, second].filter(Boolean).map((a) => ({ label: a.label, p: Math.round(a.p * 1000) / 1000 })) };
 }
 /** Stable key for "the same merchant": the first two meaningful words without card prefixes. */
 export function merchantKey(description) {
