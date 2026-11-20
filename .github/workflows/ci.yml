@@ -17,10 +17,21 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: "8.0.x" }
       - uses: actions/setup-node@v4
-        with: { node-version: "20" }
-      - name: Build web app
+        with: { node-version: "22" }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Train and evaluate the categoriser (fails if accuracy drops)
+        working-directory: ml
+        run: |
+          pip install -r requirements.txt
+          python generate_data.py && python train_categoriser.py
+          python -c "import json; m=json.load(open('reports/categoriser.json'))['comparison']['logistic_regression']; assert m['known_merchants_accuracy'] > 0.97 and m['test_accuracy'] > 0.55, m; print(m)"
+      - name: Build web app and run AI tests
         working-directory: web
-        run: npm ci || npm install && npm run build
+        run: |
+          npm ci || npm install
+          npm run build
+          npm test
       - name: Restore and build .NET solution
         run: dotnet build FinTrack.sln -c Release
       - name: Run tests

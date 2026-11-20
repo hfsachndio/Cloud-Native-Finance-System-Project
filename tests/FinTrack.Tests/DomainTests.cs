@@ -8,15 +8,28 @@ namespace FinTrack.Tests;
 public class CategorizerTests
 {
     [Theory]
-    [InlineData("Salary deposit", 3200, "Income")]
-    [InlineData("Supermarket", -86.40, "Groceries")]
-    [InlineData("Electricity bill", -64.10, "Bills")]
-    [InlineData("Careem ride to office", -9.50, "Transport")]
-    [InlineData("Pharmacy", -23.90, "Health")]
-    [InlineData("Something odd", -5, "Uncategorised")]
+    [InlineData("SALARY CREDIT ACME LTD", 3200, "Income")]
+    [InlineData("POS IMTIAZ SUPERMARKET KARACHI", -86.40, "Groceries")]
+    [InlineData("K-ELECTRIC BILL PAYMENT REF 88213", -64.10, "Bills")]
+    [InlineData("CAREEM RIDE 14/11", -9.50, "Transport")]
+    [InlineData("D-WATSON PHARMACY ISB", -23.90, "Health")]
+    [InlineData("RAAST TRANSFER TO ALI", -100, "Transfers")]
     [InlineData("Unknown deposit", 50, "Income")]
-    public void Categorises_by_keyword(string description, decimal amount, string expected) =>
+    public void Categorises_with_the_trained_model(string description, decimal amount, string expected) =>
         Assert.Equal(expected, Categorizer.Categorise(description, amount));
+
+    [Fact]
+    public void Matches_the_scikit_learn_predictions()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "../../../../../ml/reports/parity.json");
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+        foreach (var s in doc.RootElement.EnumerateArray())
+        {
+            var p = Categorizer.Predict(s.GetProperty("text").GetString()!)!;
+            Assert.Equal(s.GetProperty("label").GetString(), p.Category);
+            Assert.InRange(p.Confidence, s.GetProperty("p").GetDouble() - 0.002, s.GetProperty("p").GetDouble() + 0.002);
+        }
+    }
 }
 
 public class BudgetCalculatorTests

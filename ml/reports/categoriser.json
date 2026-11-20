@@ -1,0 +1,189 @@
+{
+ "comparison": {
+  "logistic_regression": {
+   "cv_macro_f1": 0.9957,
+   "test_accuracy": 0.6109,
+   "test_macro_f1": 0.5992,
+   "known_merchants_accuracy": 0.9945
+  },
+  "linear_svm": {
+   "cv_macro_f1": 0.9964,
+   "test_accuracy": 0.59,
+   "test_macro_f1": 0.5749,
+   "known_merchants_accuracy": 0.9954
+  },
+  "naive_bayes": {
+   "cv_macro_f1": 0.9938,
+   "test_accuracy": 0.6436,
+   "test_macro_f1": 0.6293,
+   "known_merchants_accuracy": 0.9936
+  },
+  "keyword_rules_baseline": {
+   "test_accuracy": 0.3355,
+   "test_macro_f1": 0.4306,
+   "known_merchants_accuracy": 0.3907
+  }
+ },
+ "per_class": {
+  "Bills": {
+   "precision": 0.763,
+   "recall": 0.72,
+   "f1-score": 0.741
+  },
+  "Dining": {
+   "precision": 0.617,
+   "recall": 0.807,
+   "f1-score": 0.699
+  },
+  "Entertainment": {
+   "precision": 0.648,
+   "recall": 0.664,
+   "f1-score": 0.656
+  },
+  "Groceries": {
+   "precision": 0.678,
+   "recall": 0.647,
+   "f1-score": 0.662
+  },
+  "Health": {
+   "precision": 0.637,
+   "recall": 0.72,
+   "f1-score": 0.676
+  },
+  "Income": {
+   "precision": 0.58,
+   "recall": 0.4,
+   "f1-score": 0.473
+  },
+  "Shopping": {
+   "precision": 0.471,
+   "recall": 0.384,
+   "f1-score": 0.423
+  },
+  "Transfers": {
+   "precision": 0.492,
+   "recall": 0.62,
+   "f1-score": 0.549
+  },
+  "Transport": {
+   "precision": 0.562,
+   "recall": 0.472,
+   "f1-score": 0.513
+  }
+ },
+ "labels": [
+  "Bills",
+  "Dining",
+  "Entertainment",
+  "Groceries",
+  "Health",
+  "Income",
+  "Shopping",
+  "Transfers",
+  "Transport"
+ ],
+ "confusion_matrix": [
+  [
+   90,
+   0,
+   0,
+   13,
+   1,
+   1,
+   0,
+   3,
+   17
+  ],
+  [
+   8,
+   121,
+   1,
+   4,
+   3,
+   0,
+   13,
+   0,
+   0
+  ],
+  [
+   0,
+   2,
+   83,
+   8,
+   1,
+   1,
+   15,
+   12,
+   3
+  ],
+  [
+   0,
+   18,
+   0,
+   97,
+   10,
+   0,
+   13,
+   2,
+   10
+  ],
+  [
+   1,
+   8,
+   1,
+   0,
+   72,
+   0,
+   5,
+   0,
+   13
+  ],
+  [
+   8,
+   1,
+   0,
+   2,
+   4,
+   40,
+   0,
+   45,
+   0
+  ],
+  [
+   7,
+   25,
+   18,
+   5,
+   20,
+   1,
+   48,
+   1,
+   0
+  ],
+  [
+   0,
+   1,
+   0,
+   0,
+   1,
+   25,
+   8,
+   62,
+   3
+  ],
+  [
+   4,
+   20,
+   25,
+   14,
+   1,
+   1,
+   0,
+   1,
+   59
+  ]
+ ],
+ "mean_confidence_correct": 0.758,
+ "mean_confidence_wrong": 0.398,
+ "features": 4753
+}

@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- The trained categoriser (ml/train_categoriser.py) shared with the Node.js API -->
+    <EmbeddedResource Include="..\..\web\api\_lib\models\categoriser.json" LogicalName="FinTrack.Shared.categoriser.json" />
+  </ItemGroup>
 </Project>

@@ -5,6 +5,15 @@ export interface Account { id: string; name: string; kind: string; mask: string;
 export interface Transaction {
   id: string; accountId: string; description: string; category: string; amount: number;
   date: string; status: Status; receiptBlob?: string | null; receiptTotal?: number | null; hasFile?: boolean;
+  aiConfidence?: number | null; aiSource?: "model" | "learned" | "user" | null;
+}
+export interface Suggestion { category: string | null; confidence: number; source?: "model" | "learned"; alternatives?: { label: string; p: number }[] }
+export interface CategoryForecast { category: string; history: number[]; spentThisMonth: number; projectedThisMonth: number; nextMonth: number; method: string; alpha: number | null; beta: number | null; budget: number | null; overBudgetRisk: boolean }
+export interface Insights {
+  month: string; dayOfMonth: number; daysInMonth: number; months: string[]; enoughHistory: boolean;
+  total: { history: number[]; spentThisMonth: number; projectedThisMonth: number; nextMonth: number; mae: number | null; naiveMae: number | null; method: string };
+  byCategory: CategoryForecast[]; unusual: (Transaction & { score: number; typical: number })[];
+  model: { name: string; type: string; labels: string[]; features: number; metrics: { known_merchants_accuracy: number; test_accuracy: number; test_macro_f1: number; train_rows: number; test_rows: number } };
 }
 export interface BudgetProgress { category: string; month: string; limit: number; spent: number; remaining: number; percent: number; overThreshold: boolean }
 export interface CashFlow { month: string; income: number; spending: number }
@@ -67,6 +76,9 @@ const httpApi = {
   cashFlow: (months = 6) => request<CashFlow[]>(`/api/reports/cash-flow?months=${months}`),
   categories: (year?: number) => request<CategoryShare[]>(`/api/reports/categories${year ? `?year=${year}` : ""}`),
   resetWorkspace: () => request("/api/workspace/reset", json("POST", {})),
+  suggestCategory: (description: string, amount?: number) => request<Suggestion>("/api/ai/categorise", json("POST", { description, amount })),
+  recategorise: (id: string, category: string) => request<Transaction & { learnedFor: string }>(`/api/transactions/${id}/category`, json("POST", { category })),
+  insights: () => request<Insights>("/api/ai/insights"),
 };
 
 type AuthResult = { token: string; user: User };

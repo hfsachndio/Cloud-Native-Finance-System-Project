@@ -1,7 +1,8 @@
 import { createClient } from "@libsql/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { categorise, newId, progress, round2, seedData, thisMonth, ym, ymd } from "./domain.js";
+import { newId, progress, round2, seedData, thisMonth, ym, ymd } from "./domain.js";
+import * as ai from "./ai.js";
 
 export class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
 
@@ -21,7 +22,10 @@ async function migrate(c) {
     `create table if not exists receipts (tx_id text primary key, user_id text not null references users(id) on delete cascade, name text not null, type text not null, size integer not null, data blob not null, uploaded_at text not null)`,
     `create table if not exists budgets (id text primary key, user_id text not null references users(id) on delete cascade, category text not null, month text not null, limit_amount real not null, alert_threshold real not null default 0.9, unique (user_id, category, month))`,
     `create table if not exists alerts (id text primary key, user_id text not null references users(id) on delete cascade, category text not null, month text not null, message text not null, raised_at text not null, unique (user_id, category, month))`,
+    `create table if not exists learned_categories (user_id text not null references users(id) on delete cascade, merchant_key text not null, category text not null, updated_at text not null, primary key (user_id, merchant_key))`,
   ], "write");
+  // columns added after the first release
+  for (const sql of ["alter table transactions add column ai_confidence real", "alter table transactions add column ai_source text"]) await c.execute(sql).catch(() => {});
   await c.execute("pragma foreign_keys = on").catch(() => {});
 }
 
@@ -85,7 +89,7 @@ async function seedWorkspace(c, uid) {
   const s = seedData(), now = new Date().toISOString();
   const stmts = [
     ...s.accounts.map((a) => ({ sql: "insert into accounts (id, user_id, name, kind, mask, balance, currency, updated_at) values (?,?,?,?,?,?,'USD',?)", args: [a.id, uid, a.name, a.kind, a.mask, a.balance, now] })),
-    ...s.transactions.map((t) => ({ sql: "insert into transactions (id, user_id, account_id, description, category, amount, date, status, receipt_blob, receipt_total, processing_at, created_at) values (?,?,?,?,?,?,?,?,?,?,?,?)", args: [t.id, uid, t.accountId, t.description, t.category, t.amount, t.date, t.status, t.receiptBlob, t.receiptTotal, t.status === "Processing" ? now : null, t.createdAt] })),
+    ...s.transactions.map((t) => ({ sql: "insert into transactions (id, user_id, account_id, description, category, amount, date, status, receipt_blob, receipt_total, processing_at, created_at, ai_confidence, ai_source) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", args: [t.id, uid, t.accountId, t.description, t.category, t.amount, t.date, t.status, t.receiptBlob, t.receiptTotal, t.status === "Processing" ? now : null, t.createdAt, t.aiConfidence ?? null, t.aiSource ?? null] })),
     ...s.budgets.map((b) => ({ sql: "insert into budgets (id, user_id, category, month, limit_amount, alert_threshold) values (?,?,?,?,?,?)", args: [b.id, uid, b.category, b.month, b.limit, b.alertThreshold] })),
   ];
   await c.batch(stmts, "write");
@@ -115,7 +119,7 @@ export async function addAccount(uid, body) {
 }
 
 const toAccount = (r) => ({ id: r.id, name: r.name, kind: r.kind, mask: r.mask, balance: Number(r.balance), currency: r.currency, updatedAt: r.updated_at });
-const toTx = (r) => ({ id: r.id, accountId: r.account_id, description: r.description, category: r.category, amount: Number(r.amount), date: r.date, status: r.status, receiptBlob: r.receipt_blob, receiptTotal: r.receipt_total == null ? null : Number(r.receipt_total), hasFile: !!r.has_file });
+const toTx = (r) => ({ id: r.id, accountId: r.account_id, description: r.description, category: r.category, amount: Number(r.amount), date: r.date, status: r.status, receiptBlob: r.receipt_blob, receiptTotal: r.receipt_total == null ? null : Number(r.receipt_total), hasFile: !!r.has_file, aiConfidence: r.ai_confidence == null ? null : Number(r.ai_confidence), aiSource: r.ai_source || null });
 const toBudget = (r) => ({ id: r.id, category: r.category, month: r.month, limit: Number(r.limit_amount), alertThreshold: Number(r.alert_threshold) });
 
 /** Port of the ProcessReceipt Azure Function: receipts in "Processing" for 2.5 s are read and matched. */
@@ -172,6 +176,11 @@ export async function transactions(uid, q) {
   return r.rows.map(toTx);
 }
 
+async function learnedMap(c, uid) {
+  const r = await c.execute({ sql: "select merchant_key, category from learned_categories where user_id = ?", args: [uid] });
+  return new Map(r.rows.map((x) => [x.merchant_key, x.category]));
+}
+
 export async function addTransaction(uid, body) {
   const description = String(body.description || "").trim(), amount = Number(body.amount);
   if (!description || !amount) throw new HttpError(400, "Description and a non-zero amount are required");
@@ -179,13 +188,71 @@ export async function addTransaction(uid, body) {
   const account = (await c.execute({ sql: "select * from accounts where id = ? and user_id = ?", args: [body.accountId, uid] })).rows[0];
   if (!account) throw new HttpError(404, "Account not found");
   const now = new Date().toISOString();
-  const t = { id: newId(), accountId: account.id, description: description.slice(0, 120), amount: round2(amount), category: String(body.category || "").trim() || categorise(description, amount), date: ymd(new Date()), status: "Completed", receiptBlob: null, receiptTotal: null };
+  const chosen = String(body.category || "").trim();
+  const guess = chosen ? null : ai.categorise(description, amount, await learnedMap(c, uid));
+  const t = { id: newId(), accountId: account.id, description: description.slice(0, 120), amount: round2(amount), category: chosen || guess.category, date: ymd(new Date()), status: "Completed", receiptBlob: null, receiptTotal: null,
+    aiConfidence: guess ? guess.confidence : null, aiSource: guess ? guess.source : "user" };
   await c.batch([
-    { sql: "insert into transactions (id, user_id, account_id, description, category, amount, date, status, created_at) values (?,?,?,?,?,?,?,?,?)", args: [t.id, uid, t.accountId, t.description, t.category, t.amount, t.date, t.status, now] },
+    { sql: "insert into transactions (id, user_id, account_id, description, category, amount, date, status, created_at, ai_confidence, ai_source) values (?,?,?,?,?,?,?,?,?,?,?)", args: [t.id, uid, t.accountId, t.description, t.category, t.amount, t.date, t.status, now, t.aiConfidence, t.aiSource] },
     { sql: "update accounts set balance = round(balance + ?, 2), updated_at = ? where id = ?", args: [t.amount, now, account.id] },
   ], "write");
   await checkBudget(c, uid, t.category, ym(t.date));
   return t;
+}
+
+/** Changing a category teaches FinTrack: later transactions from the same merchant use the correction. */
+export async function recategorise(uid, txId, body) {
+  const category = String(body.category || "").trim().slice(0, 40);
+  if (!category) throw new HttpError(400, "Choose a category");
+  const c = await db();
+  const t = (await c.execute({ sql: "select * from transactions where id = ? and user_id = ?", args: [txId, uid] })).rows[0];
+  if (!t) throw new HttpError(404, "Transaction not found");
+  const key = ai.merchantKey(t.description), now = new Date().toISOString();
+  await c.batch([
+    { sql: "update transactions set category = ?, ai_source = 'user', ai_confidence = null where id = ?", args: [category, txId] },
+    ...(key ? [{ sql: "insert into learned_categories (user_id, merchant_key, category, updated_at) values (?,?,?,?) on conflict(user_id, merchant_key) do update set category = excluded.category, updated_at = excluded.updated_at", args: [uid, key, category, now] }] : []),
+  ], "write");
+  await checkBudget(c, uid, category, ym(t.date));
+  return { ...toTx({ ...t, category, ai_source: "user", ai_confidence: null }), learnedFor: key };
+}
+
+/** Live suggestion while typing a description. */
+export async function suggestCategory(uid, body) {
+  const description = String(body.description || "").trim();
+  if (!description) return { category: null, confidence: 0, alternatives: [] };
+  const c = await db();
+  return ai.categorise(description, Number(body.amount) || -1, await learnedMap(c, uid));
+}
+
+/** Forecast for next month per category, this month's projected total vs budgets, and unusual transactions. */
+export async function insights(uid) {
+  const c = await db();
+  const now = new Date(), month = thisMonth();
+  const start = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+  const rows = (await c.execute({ sql: "select id, description, category, amount, date from transactions where user_id = ? and date >= ? order by date", args: [uid, ymd(start)] })).rows
+    .map((r) => ({ id: r.id, description: r.description, category: r.category, amount: Number(r.amount), date: r.date }));
+  const months = Array.from({ length: 6 }, (_, i) => ym(new Date(now.getFullYear(), now.getMonth() - 6 + i, 1)));
+  const spend = rows.filter((t) => t.amount < 0 && t.category !== "Transfers");
+  const cats = [...new Set(spend.map((t) => t.category))];
+  const series = (cat) => months.map((m) => round2(spend.filter((t) => (!cat || t.category === cat) && t.date.startsWith(m)).reduce((s, t) => s - t.amount, 0)));
+  const day = now.getDate(), dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const sofar = (cat) => round2(spend.filter((t) => (!cat || t.category === cat) && t.date.startsWith(month)).reduce((s, t) => s - t.amount, 0));
+  const budgetsNow = new Map((await c.execute({ sql: "select category, limit_amount from budgets where user_id = ? and month = ?", args: [uid, month] })).rows.map((b) => [b.category.toLowerCase(), Number(b.limit_amount)]));
+  const byCategory = cats.map((cat) => {
+    const hist = series(cat), h = ai.holt(hist.filter((v, i) => v > 0 || hist.slice(0, i).some((x) => x > 0)));
+    const projected = round2(ai.blendMonth(sofar(cat), day, dim, h.forecast));
+    const limit = budgetsNow.get(cat.toLowerCase()) ?? null;
+    // a category that only started this month: next month is expected to look like this one
+    const next = h.method === "none" ? projected : h.forecast;
+    return { category: cat, history: hist, spentThisMonth: sofar(cat), projectedThisMonth: projected, nextMonth: round2(next), method: h.method, alpha: h.alpha, beta: h.beta,
+      budget: limit, overBudgetRisk: limit != null && projected > limit };
+  }).sort((a, b) => b.projectedThisMonth - a.projectedThisMonth);
+  const total = ai.holt(series(null).filter((v, i, a) => v > 0 || a.slice(0, i).some((x) => x > 0)));
+  return {
+    month, dayOfMonth: day, daysInMonth: dim, months,
+    total: { history: series(null), spentThisMonth: sofar(null), projectedThisMonth: round2(ai.blendMonth(sofar(null), day, dim, total.forecast)), nextMonth: round2(total.forecast), mae: total.mae == null ? null : round2(total.mae), naiveMae: total.naiveMae == null ? null : round2(total.naiveMae), method: total.method },
+    byCategory, unusual: ai.unusual(rows), model: ai.modelInfo(), enoughHistory: rows.length >= 10,
+  };
 }
 
 export async function uploadReceipt(uid, txId, body) {

@@ -13,6 +13,9 @@ The Azure/.NET build below is the main architecture; the Vercel API keeps the de
 
 ## Features
 
+- **AI categorisation** — a machine-learning model (character n-gram TF-IDF + logistic regression, trained in [`ml/`](ml/)) reads each bank-statement line and picks the category with a confidence score; 99.5% accurate on new lines from known merchants, 61% on merchants it has never seen (keyword rules: 34%). Correct a category once and FinTrack learns that merchant for you
+- **AI insights** — next-month spending forecast per category (Holt's trend model tuned on your own history), month-end projection against each budget, and unusual-payment detection (robust z-score)
+
 - **Dashboard** — total balance, monthly income and spending, 6-month cash flow, budgets and recent transactions
 - **Transactions** — add, filter and search; uncategorised transactions are **auto-categorised** on arrival
 - **Receipts** — uploads go to a private **Blob Storage** container; an **Azure Function** reads the total and matches it to the transaction
@@ -48,7 +51,9 @@ flowchart TB
 | `FinTrack.Functions` | Azure Functions (isolated, .NET 8) | `ProcessReceipt` (Blob trigger), `BudgetAlert` (Cosmos DB trigger), `MonthlySummary` (Timer) |
 | `FinTrack.Infrastructure` | Cosmos DB SDK, Azure Storage SDK | Cosmos repository and Blob receipt store |
 | `FinTrack.Shared` | .NET class library | Models, categoriser, budget calculator, receipt parser, in-memory storage |
-| `web/` | React, TypeScript, Vite | Dashboard, Transactions, Accounts, Budgets, Receipts, Reports |
+| `web/` | React, TypeScript, Vite | Dashboard, Transactions, Accounts, Budgets, Receipts, Reports, AI insights |
+| `web/api/` | Node.js (Vercel), Turso / libSQL | Live-demo API: same routes as the gateway, plus `ai/categorise` and `ai/insights` |
+| `ml/` | Python, scikit-learn | Dataset, training, evaluation and export of the categoriser ([model card](ml/README.md)) |
 | `infra/main.bicep` | Bicep | App Service, Functions, Cosmos DB (serverless), Storage, App Insights, role assignments |
 
 ## Screenshots

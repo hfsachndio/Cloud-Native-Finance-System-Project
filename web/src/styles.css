@@ -85,3 +85,13 @@ button.thumb { border: 0; color: inherit; cursor: pointer; } button.thumb:disabl
 .empty a, .empty button { margin-top: 6px; }
 a.btn { display: inline-flex; align-items: center; height: 38px; padding: 0 16px; border-radius: 10px; background: var(--blue); color: #fff; text-decoration: none; font-weight: 600; }
 .clear-data { margin-top: auto; background: transparent; color: #94A3B8; box-shadow: 0 0 0 1px rgba(255,255,255,.15); height: 32px; font-size: 13px; }
+
+/* AI */
+.ai-hint { margin-top: 10px; font-size: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ai-tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .02em; padding: 2px 7px; border-radius: 99px; background: rgba(139, 92, 246, .15); color: #7c3aed; margin-left: 6px; vertical-align: middle; }
+.ai-tag.learned { background: rgba(34, 197, 94, .15); color: #15803d; }
+.ai-hint .ai-tag { margin-left: 0; }
+.cat-select { padding: 4px 6px; font-size: 13px; border-radius: 6px; max-width: 150px; }
+.model-card { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; }
+.grid2.grid2-auto { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.bad { color: #dc2626; }

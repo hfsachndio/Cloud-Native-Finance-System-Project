@@ -37,6 +37,9 @@ export default async function handler(req, res) {
     else if (method === "POST" && path === "accounts/transfer") out = await s.transfer(auth(), body);
     else if (method === "GET" && path === "transactions") out = await s.transactions(auth(), qp);
     else if (method === "POST" && path === "transactions") out = await s.addTransaction(auth(), body);
+    else if (method === "POST" && a === "transactions" && c === "category") out = await s.recategorise(auth(), b, body);
+    else if (method === "POST" && path === "ai/categorise") out = await s.suggestCategory(auth(), body);
+    else if (method === "GET" && path === "ai/insights") out = await s.insights(auth());
     else if (method === "POST" && a === "transactions" && c === "receipt") out = await s.uploadReceipt(auth(), b, body);
     else if (method === "GET" && a === "transactions" && c === "receipt") {
       const f = await s.receiptFile(auth(), b);

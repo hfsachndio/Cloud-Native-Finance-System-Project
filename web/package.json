@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "build:demo": "tsc -b && vite build --mode demo",
     "build:vercel": "tsc -b && vite build --mode vercel",
-    "dev:full": "node dev-api.js & vite"
+    "dev:full": "node dev-api.js & vite",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",

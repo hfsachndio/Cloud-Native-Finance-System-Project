@@ -13,10 +13,11 @@ import Accounts from "./pages/Accounts";
 import Budgets from "./pages/Budgets";
 import Receipts from "./pages/Receipts";
 import Reports from "./pages/Reports";
+import Insights from "./pages/Insights";
 
 const nav = [
   ["/", "Dashboard"], ["/transactions", "Transactions"], ["/accounts", "Accounts"],
-  ["/budgets", "Budgets"], ["/receipts", "Receipts"], ["/reports", "Reports"],
+  ["/budgets", "Budgets"], ["/receipts", "Receipts"], ["/reports", "Reports"], ["/insights", "AI insights"],
 ];
 
 function App() {
@@ -57,6 +58,7 @@ function App() {
           <Route path="/budgets" element={<Budgets />} />
           <Route path="/receipts" element={<Receipts />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/insights" element={<Insights />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
