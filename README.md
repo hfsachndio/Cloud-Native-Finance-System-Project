@@ -5,10 +5,10 @@
 
 ![FinTrack](docs/preview.png)
 
-**Live demo:** https://fintrack-two-rosy.vercel.app (click **Try a demo workspace**, or create an account)
+**Live site:** https://fintrack-two-rosy.vercel.app (create an account to start)
 
 The live demo runs a **Node.js serverless API on Vercel backed by Turso (libSQL)** that exposes the same routes as the .NET gateway (`web/api/`):
-JWT sign-in and sign-up (bcrypt); new accounts start with an empty workspace (the demo workspace comes with sample data), and signing in returns you to the page you last had open; auto-categorisation, budget alerts, transfers with balance checks, receipt upload and processing, and reports.
+JWT sign-in and sign-up (bcrypt); new accounts start with an empty workspace, and signing in returns you to the page you last had open; auto-categorisation, budget alerts, transfers with balance checks, receipt upload and processing, and reports.
 The Azure/.NET build below is the main architecture; the Vercel API keeps the demo free to host.
 
 ## Features

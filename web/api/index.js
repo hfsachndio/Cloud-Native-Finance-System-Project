@@ -28,7 +28,6 @@ export default async function handler(req, res) {
     if (method === "GET" && path === "health") out = await s.health();
     else if (method === "POST" && path === "auth/register") out = await s.register(body);
     else if (method === "POST" && path === "auth/login") out = await s.login(body);
-    else if (method === "POST" && path === "auth/demo") out = await s.demo();
     else if (method === "GET" && path === "auth/me") out = await s.me(auth());
     else if (method === "POST" && path === "workspace/reset") out = await s.resetWorkspace(auth());
     else if (method === "GET" && path === "accounts") out = await s.accounts(auth());

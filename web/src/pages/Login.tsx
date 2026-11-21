@@ -34,7 +34,6 @@ export default function Login() {
           {expired && !err && <div className="muted">Your session ended. Sign in to continue where you left off.</div>}
           {err && <div className="err">{err}</div>}
           <button type="submit" disabled={busy}>{busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}</button>
-          <button type="button" className="alt" disabled={busy} onClick={() => void run(auth.demo)}>Try a demo workspace</button>
           <button type="button" className="switch" onClick={() => { setMode(mode === "login" ? "register" : "login"); setErr(""); }}>
             {mode === "login" ? "New here? Create an account" : "Already have an account? Sign in"}
           </button>

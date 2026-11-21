@@ -88,7 +88,6 @@ export const afterLogin = (u: User) => session.lastPage(u.id);
 export const auth = {
   login: (email: string, password: string) => request<AuthResult>("/api/auth/login", json("POST", { email, password })).then(remember),
   register: (name: string, email: string, password: string) => request<AuthResult>("/api/auth/register", json("POST", { name, email, password })).then(remember),
-  demo: () => request<AuthResult>("/api/auth/demo", json("POST", {})).then(remember),
   logout: () => { session.rememberPage(location.pathname + location.search); session.clear(); location.assign("/login"); },
 };
 
