@@ -51,7 +51,7 @@ flowchart TB
 | `FinTrack.Functions` | Azure Functions (isolated, .NET 8) | `ProcessReceipt` (Blob trigger), `BudgetAlert` (Cosmos DB trigger), `MonthlySummary` (Timer) |
 | `FinTrack.Infrastructure` | Cosmos DB SDK, Azure Storage SDK | Cosmos repository and Blob receipt store |
 | `FinTrack.Shared` | .NET class library | Models, categoriser, budget calculator, receipt parser, in-memory storage |
-| `web/` | React, TypeScript, Vite | Dashboard, Transactions, Accounts, Budgets, Receipts, Reports, AI insights |
+| `web/` | React, TypeScript, Vite | Dashboard, Transactions, Accounts, Budgets, Receipts, Reports, AI insights (Vercel Web Analytics and Speed Insights on the live demo) |
 | `web/api/` | Node.js (Vercel), Turso / libSQL | Live-demo API: same routes as the gateway, plus `ai/categorise` and `ai/insights` |
 | `ml/` | Python, scikit-learn | Dataset, training, evaluation and export of the categoriser ([model card](ml/README.md)) |
 | `infra/main.bicep` | Bicep | App Service, Functions, Cosmos DB (serverless), Storage, App Insights, role assignments |
