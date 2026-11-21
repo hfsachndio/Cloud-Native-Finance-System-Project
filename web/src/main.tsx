@@ -2,6 +2,12 @@ import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import "./styles.css";
+import { inject } from "@vercel/analytics";
+import { injectSpeedInsights } from "@vercel/speed-insights";
+
+// Vercel Web Analytics and Speed Insights (free tier, cookie-free; only active on Vercel).
+inject();
+injectSpeedInsights();
 import { afterLogin, api, auth, DEMO, session } from "./api";
 
 const afterLoginPath = () => { const u = session.user(); return u ? afterLogin(u) : "/"; };
